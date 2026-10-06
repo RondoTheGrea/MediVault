@@ -1,0 +1,130 @@
+"""
+Fills an empty database with roles, permissions, demo users and demo patients.
+Runs only once: if roles already exist, nothing happens.
+"""
+from models import Permission, Patient, HistoryEntry, Allergy, Medication
+from repositories import (RoleRepository, UserRepository, PatientRepository,
+                          HistoryRepository, AllergyRepository, MedicationRepository)
+from security import AuthManager
+
+ALL_PERMISSIONS = [
+    Permission.VIEW_PATIENTS, Permission.CREATE_PATIENTS, Permission.EDIT_PATIENTS,
+    Permission.DELETE_PATIENTS, Permission.VIEW_HISTORY, Permission.EDIT_HISTORY,
+    Permission.VIEW_ALLERGIES, Permission.EDIT_ALLERGIES, Permission.VIEW_MEDICATIONS,
+    Permission.EDIT_MEDICATIONS, Permission.EMERGENCY_ACCESS, Permission.VIEW_DASHBOARD,
+    Permission.VIEW_AUDIT_LOGS, Permission.MANAGE_USERS,
+]
+
+# role name, display name, permissions
+DEFAULT_ROLES = [
+    ["admin", "Administrator", [
+        Permission.VIEW_PATIENTS, Permission.VIEW_DASHBOARD, Permission.VIEW_AUDIT_LOGS,
+        Permission.MANAGE_USERS,
+    ]],
+    ["physician", "Physician", [
+        Permission.VIEW_PATIENTS, Permission.EDIT_PATIENTS,
+        Permission.VIEW_HISTORY, Permission.EDIT_HISTORY,
+        Permission.VIEW_ALLERGIES, Permission.EDIT_ALLERGIES,
+        Permission.VIEW_MEDICATIONS, Permission.EDIT_MEDICATIONS,
+        Permission.EMERGENCY_ACCESS,
+    ]],
+    ["nurse", "Nurse", [
+        Permission.VIEW_PATIENTS, Permission.VIEW_HISTORY,
+        Permission.VIEW_ALLERGIES, Permission.EDIT_ALLERGIES,
+        Permission.VIEW_MEDICATIONS, Permission.EDIT_MEDICATIONS,
+        Permission.EMERGENCY_ACCESS,
+    ]],
+    ["records_staff", "Records Staff", [
+        Permission.VIEW_PATIENTS, Permission.CREATE_PATIENTS,
+        Permission.EDIT_PATIENTS, Permission.DELETE_PATIENTS,
+    ]],
+    ["emergency_responder", "Emergency Responder", [
+        Permission.EMERGENCY_ACCESS,
+    ]],
+]
+
+# username, full name, password, role name
+DEMO_USERS = [
+    ["admin", "Alice Admin", "Admin1234", "admin"],
+    ["dr.reyes", "Dr. Jose Reyes", "Doctor1234", "physician"],
+    ["nurse.cruz", "Ana Cruz, RN", "Nurse1234", "nurse"],
+    ["records.lim", "Ben Lim", "Records1234", "records_staff"],
+    ["medic.tan", "Carlo Tan", "Medic1234", "emergency_responder"],
+]
+
+
+def seed_if_empty(conn, encryptor):
+    roles = RoleRepository(conn)
+    if len(roles.list_all()) > 0:
+        return
+
+    for permission_name in ALL_PERMISSIONS:
+        roles.create_permission(permission_name)
+
+    for role in DEFAULT_ROLES:
+        roles.create(role[0], role[1], role[2])
+
+    users = UserRepository(conn, roles)
+    for demo_user in DEMO_USERS:
+        role = roles.find_by_name(demo_user[3])
+        users.create(demo_user[0], demo_user[1], AuthManager.hash_password(demo_user[2]), role.id)
+
+    seed_patients(conn, encryptor)
+
+
+def seed_patients(conn, encryptor):
+    patients = PatientRepository(conn)
+    history = HistoryRepository(conn, encryptor)
+    allergies = AllergyRepository(conn)
+    medications = MedicationRepository(conn, encryptor)
+
+    juan = Patient(first_name="Juan", last_name="Dela Cruz", birth_date="1980-05-14", sex="Male",
+                   blood_type="O+", phone="0917 123 4567", address="12 Mabini St, Manila",
+                   emergency_contact_name="Rosa Dela Cruz (wife)",
+                   emergency_contact_phone="0917 765 4321")
+    patients.create(juan)
+    history.save(HistoryEntry(patient_id=juan.id, entry_date="2019-03-02",
+                              diagnosis="Type 2 diabetes mellitus",
+                              treatment_notes="Started on metformin. Diet counselling given."))
+    history.save(HistoryEntry(patient_id=juan.id, entry_date="2021-08-19",
+                              diagnosis="Acute appendicitis",
+                              treatment_notes="Laparoscopic appendectomy, uneventful recovery."))
+    allergies.save(Allergy(patient_id=juan.id, allergen="Penicillin",
+                           reaction="Hives and throat swelling", severity="Severe"))
+    allergies.save(Allergy(patient_id=juan.id, allergen="Peanuts",
+                           reaction="Anaphylaxis", severity="Life-threatening"))
+    medications.save(Medication(patient_id=juan.id, name="Metformin", dosage="500 mg",
+                                frequency="Twice daily", status="current"))
+    medications.save(Medication(patient_id=juan.id, name="Cefuroxime", dosage="500 mg",
+                                frequency="Twice daily for 7 days", status="past"))
+
+    maria = Patient(first_name="Maria", last_name="Santos", birth_date="1992-11-02", sex="Female",
+                    blood_type="A-", phone="0918 222 3344", address="45 Rizal Ave, Quezon City",
+                    emergency_contact_name="Luis Santos (brother)",
+                    emergency_contact_phone="0918 555 6677")
+    patients.create(maria)
+    history.save(HistoryEntry(patient_id=maria.id, entry_date="2005-06-10",
+                              diagnosis="Bronchial asthma",
+                              treatment_notes="Mild persistent. Reliever inhaler prescribed."))
+    allergies.save(Allergy(patient_id=maria.id, allergen="Latex",
+                           reaction="Contact rash", severity="Moderate"))
+    medications.save(Medication(patient_id=maria.id, name="Salbutamol inhaler", dosage="100 mcg, 2 puffs",
+                                frequency="As needed", status="current"))
+
+    pedro = Patient(first_name="Pedro", last_name="Garcia", birth_date="1955-01-20", sex="Male",
+                    blood_type="B+", phone="0919 888 9900", address="7 Luna St, Pasig",
+                    emergency_contact_name="Carmen Garcia (daughter)",
+                    emergency_contact_phone="0919 111 2233")
+    patients.create(pedro)
+    history.save(HistoryEntry(patient_id=pedro.id, entry_date="2010-04-05",
+                              diagnosis="Hypertension",
+                              treatment_notes="Lifestyle changes and losartan."))
+    history.save(HistoryEntry(patient_id=pedro.id, entry_date="2018-12-11",
+                              diagnosis="Myocardial infarction",
+                              treatment_notes="PCI with stent to LAD. On dual antiplatelet therapy."))
+    medications.save(Medication(patient_id=pedro.id, name="Losartan", dosage="50 mg",
+                                frequency="Once daily", status="current"))
+    medications.save(Medication(patient_id=pedro.id, name="Aspirin", dosage="81 mg",
+                                frequency="Once daily", status="current"))
+    medications.save(Medication(patient_id=pedro.id, name="Clopidogrel", dosage="75 mg",
+                                frequency="Once daily", status="current"))
