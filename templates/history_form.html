@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Medical history{% endblock %}
+{% block content %}
+<h1>{% if entry.id %}Edit{% else %}Add{% endif %} history entry · {{ patient.full_name() }}</h1>
+{% include "_errors.html" %}
+<form class="card form narrow" method="post">
+  <label>Date *<input name="entry_date" type="date" value="{{ entry.entry_date }}" required></label>
+  <label>Diagnosis *<input name="diagnosis" value="{{ entry.diagnosis }}" required></label>
+  <label>Treatment notes<textarea name="treatment_notes" rows="4">{{ entry.treatment_notes }}</textarea></label>
+  <div class="form-buttons">
+    <button class="button primary" type="submit">Save</button>
+    <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

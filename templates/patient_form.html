@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{% if patient.id %}Edit patient{% else %}Register patient{% endif %}{% endblock %}
+{% block content %}
+<h1>{% if patient.id %}Edit {{ patient.full_name() }}{% else %}Register patient{% endif %}</h1>
+{% include "_errors.html" %}
+
+<form class="card form" method="post">
+  <div class="grid-2">
+    <label>First name *<input name="first_name" value="{{ patient.first_name }}" required maxlength="100"></label>
+    <label>Last name *<input name="last_name" value="{{ patient.last_name }}" required maxlength="100"></label>
+    <label>Birth date *<input name="birth_date" type="date" value="{{ patient.birth_date }}" required></label>
+    <label>Sex *
+      <select name="sex" required>
+        <option value="">-- choose --</option>
+        {% for choice in SEX_CHOICES %}
+          <option {% if patient.sex == choice %}selected{% endif %}>{{ choice }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Blood type
+      <select name="blood_type">
+        {% for choice in BLOOD_TYPE_CHOICES %}
+          <option value="{{ choice }}" {% if patient.blood_type == choice %}selected{% endif %}>{{ choice or "Unknown" }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Phone<input name="phone" value="{{ patient.phone }}"></label>
+  </div>
+  <label>Address<input name="address" value="{{ patient.address }}"></label>
+  <div class="grid-2">
+    <label>Emergency contact name<input name="emergency_contact_name" value="{{ patient.emergency_contact_name }}"></label>
+    <label>Emergency contact phone<input name="emergency_contact_phone" value="{{ patient.emergency_contact_phone }}"></label>
+  </div>
+  <div class="form-buttons">
+    <button class="button primary" type="submit">Save</button>
+    {% if patient.id %}
+      <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">Cancel</a>
+    {% else %}
+      <a href="{{ url_for('patient_list') }}">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

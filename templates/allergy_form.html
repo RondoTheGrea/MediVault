@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Allergy{% endblock %}
+{% block content %}
+<h1>{% if allergy.id %}Edit{% else %}Add{% endif %} allergy · {{ patient.full_name() }}</h1>
+{% include "_errors.html" %}
+<form class="card form narrow" method="post">
+  <label>Allergen *<input name="allergen" value="{{ allergy.allergen }}" required></label>
+  <label>Reaction *<input name="reaction" value="{{ allergy.reaction }}" required></label>
+  <label>Severity *
+    <select name="severity" required>
+      <option value="">-- choose --</option>
+      {% for choice in SEVERITY_CHOICES %}
+        <option {% if allergy.severity == choice %}selected{% endif %}>{{ choice }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <div class="form-buttons">
+    <button class="button primary" type="submit">Save</button>
+    <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

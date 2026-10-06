@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Admin dashboard</h1>
+
+<div class="stats">
+  <div class="stat"><span class="stat-number">{{ summary.patients }}</span><span>Patients</span></div>
+  <div class="stat"><span class="stat-number">{{ summary.active_users }}</span><span>Active staff</span></div>
+  <div class="stat"><span class="stat-number">{{ summary.accesses_today }}</span><span>Accesses today</span></div>
+  <div class="stat"><span class="stat-number">{{ summary.routine_accesses }}</span><span>Routine accesses</span></div>
+  <div class="stat stat-danger"><span class="stat-number">{{ summary.emergency_accesses }}</span><span>Emergency accesses</span></div>
+</div>
+
+<section class="card">
+  <div class="section-header">
+    <h2>Recent emergency accesses</h2>
+    {% if g.user.can(Permission.VIEW_AUDIT_LOGS) %}
+      <a class="button small" href="{{ url_for('audit_log', type='emergency') }}">See all</a>
+    {% endif %}
+  </div>
+  <table>
+    <thead><tr><th>Time</th><th>Staff</th><th>Patient</th><th>Reason</th></tr></thead>
+    <tbody>
+    {% for log in recent_emergencies %}
+      <tr>
+        <td class="nowrap">{{ log.created_at }}</td>
+        <td>{{ log.user_full_name }} <small class="muted">({{ log.username }})</small></td>
+        <td>{{ log.patient_name }}</td>
+        <td>{{ log.reason }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No emergency accesses yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

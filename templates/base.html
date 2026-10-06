@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MediVault{% endblock %} · MediVault</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% if g.user %}
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">MediVault</a>
+    <nav>
+      {% if g.user.can(Permission.VIEW_PATIENTS) or g.user.can(Permission.EMERGENCY_ACCESS) %}
+        <a href="{{ url_for('patient_list') }}">Patients</a>
+      {% endif %}
+      {% if g.user.can(Permission.VIEW_DASHBOARD) %}
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      {% endif %}
+      {% if g.user.can(Permission.VIEW_AUDIT_LOGS) %}
+        <a href="{{ url_for('audit_log') }}">Audit log</a>
+      {% endif %}
+      {% if g.user.can(Permission.MANAGE_USERS) %}
+        <a href="{{ url_for('user_list') }}">Users</a>
+      {% endif %}
+    </nav>
+    <div class="who">
+      <span>{{ g.user.full_name }} <small class="badge">{{ g.user.role.display_name }}</small></span>
+      <form method="post" action="{{ url_for('logout') }}">
+        <button class="link-button" type="submit">Log out</button>
+      </form>
+    </div>
+  </header>
+  {% endif %}
+
+  <main class="container">
+    {% for message in get_flashed_messages(with_categories=true) %}
+      <div class="flash flash-{{ message[0] }}">{{ message[1] }}</div>
+    {% endfor %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

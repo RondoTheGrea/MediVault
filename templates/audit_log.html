@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Audit log</h1>
+  <a class="button" href="{{ url_for('audit_log_csv', type=access_type, user=username) }}">Export CSV</a>
+</div>
+
+<form class="search" method="get">
+  <select name="type">
+    <option value="" {% if access_type == "" %}selected{% endif %}>All access types</option>
+    <option value="routine" {% if access_type == "routine" %}selected{% endif %}>Routine</option>
+    <option value="emergency" {% if access_type == "emergency" %}selected{% endif %}>Emergency</option>
+  </select>
+  <input name="user" value="{{ username }}" placeholder="Username contains...">
+  <button class="button" type="submit">Filter</button>
+  <a href="{{ url_for('audit_log') }}">Clear</a>
+</form>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Time</th><th>Staff</th><th>Patient</th><th>Type</th><th>Action</th><th>Reason / detail</th></tr></thead>
+    <tbody>
+    {% for log in logs %}
+      <tr>
+        <td class="nowrap">{{ log.created_at }}</td>
+        <td>{{ log.user_full_name }} <small class="muted">({{ log.username }})</small></td>
+        <td>{{ log.patient_name }}</td>
+        <td><span class="badge type-{{ log.access_type }}">{{ log.access_type }}</span></td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.reason }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="muted">No log entries match.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted small">Showing the newest {{ logs|length }} entries.</p>
+</div>
+{% endblock %}

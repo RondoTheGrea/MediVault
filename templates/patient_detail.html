@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% set patient = profile.patient %}
+{% block title %}{{ patient.full_name() }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ patient.full_name() }}</h1>
+  <div class="actions">
+    {% if g.user.can(Permission.EMERGENCY_ACCESS) %}
+      <a class="button danger" href="{{ url_for('emergency_access', patient_id=patient.id) }}">Emergency access</a>
+    {% endif %}
+    {% if g.user.can(Permission.EDIT_PATIENTS) %}
+      <a class="button" href="{{ url_for('patient_form', patient_id=patient.id) }}">Edit profile</a>
+    {% endif %}
+    {% if g.user.can(Permission.DELETE_PATIENTS) %}
+      {% set delete_url = url_for('patient_delete', patient_id=patient.id) %}
+      {% include "_delete_button.html" %}
+    {% endif %}
+  </div>
+</div>
+<p class="muted small">This view was recorded in the audit log.</p>
+
+<section class="card">
+  <h2>Profile</h2>
+  <dl class="facts">
+    <dt>Birth date</dt><dd>{{ patient.birth_date }} ({{ patient.age() }} years)</dd>
+    <dt>Sex</dt><dd>{{ patient.sex }}</dd>
+    <dt>Blood type</dt><dd>{{ patient.blood_type or "Unknown" }}</dd>
+    <dt>Phone</dt><dd>{{ patient.phone or "-" }}</dd>
+    <dt>Address</dt><dd>{{ patient.address or "-" }}</dd>
+    <dt>Emergency contact</dt><dd>{{ patient.emergency_contact_name or "-" }} {{ patient.emergency_contact_phone }}</dd>
+  </dl>
+</section>
+
+<section class="card">
+  <div class="section-header">
+    <h2>Allergies</h2>
+    {% if profile.allergies is not none and g.user.can(Permission.EDIT_ALLERGIES) %}
+      <a class="button small" href="{{ url_for('allergy_form', patient_id=patient.id) }}">+ Add allergy</a>
+    {% endif %}
+  </div>
+  {% if profile.allergies is none %}
+    <p class="locked">Hidden for your role.</p>
+  {% else %}
+  <table>
+    <thead><tr><th>Allergen</th><th>Reaction</th><th>Severity</th><th></th></tr></thead>
+    <tbody>
+    {% for allergy in profile.allergies %}
+      <tr>
+        <td>{{ allergy.allergen }}</td>
+        <td>{{ allergy.reaction }}</td>
+        <td><span class="severity severity-{{ allergy.severity|lower }}">{{ allergy.severity }}</span></td>
+        <td class="actions">
+          {% if g.user.can(Permission.EDIT_ALLERGIES) %}
+            <a class="button small" href="{{ url_for('allergy_form', patient_id=patient.id, allergy_id=allergy.id) }}">Edit</a>
+            {% set delete_url = url_for('allergy_delete', patient_id=patient.id, allergy_id=allergy.id) %}
+            {% include "_delete_button.html" %}
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No known allergies.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="section-header">
+    <h2>Medications</h2>
+    {% if profile.medications is not none and g.user.can(Permission.EDIT_MEDICATIONS) %}
+      <a class="button small" href="{{ url_for('medication_form', patient_id=patient.id) }}">+ Add medication</a>
+    {% endif %}
+  </div>
+  {% if profile.medications is none %}
+    <p class="locked">Hidden for your role.</p>
+  {% else %}
+  <table>
+    <thead><tr><th>Name</th><th>Dosage</th><th>Frequency</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for medication in profile.medications %}
+      <tr>
+        <td>{{ medication.name }}</td>
+        <td>{{ medication.dosage }}</td>
+        <td>{{ medication.frequency }}</td>
+        <td><span class="badge status-{{ medication.status }}">{{ medication.status }}</span></td>
+        <td class="actions">
+          {% if g.user.can(Permission.EDIT_MEDICATIONS) %}
+            <a class="button small" href="{{ url_for('medication_form', patient_id=patient.id, medication_id=medication.id) }}">Edit</a>
+            {% set delete_url = url_for('medication_delete', patient_id=patient.id, medication_id=medication.id) %}
+            {% include "_delete_button.html" %}
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No medications recorded.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="section-header">
+    <h2>Medical history</h2>
+    {% if profile.history is not none and g.user.can(Permission.EDIT_HISTORY) %}
+      <a class="button small" href="{{ url_for('history_form', patient_id=patient.id) }}">+ Add entry</a>
+    {% endif %}
+  </div>
+  {% if profile.history is none %}
+    <p class="locked">Hidden for your role.</p>
+  {% else %}
+  <table>
+    <thead><tr><th>Date</th><th>Diagnosis</th><th>Treatment notes</th><th></th></tr></thead>
+    <tbody>
+    {% for entry in profile.history %}
+      <tr>
+        <td class="nowrap">{{ entry.entry_date }}</td>
+        <td>{{ entry.diagnosis }}</td>
+        <td>{{ entry.treatment_notes }}</td>
+        <td class="actions">
+          {% if g.user.can(Permission.EDIT_HISTORY) %}
+            <a class="button small" href="{{ url_for('history_form', patient_id=patient.id, entry_id=entry.id) }}">Edit</a>
+            {% set delete_url = url_for('history_delete', patient_id=patient.id, entry_id=entry.id) %}
+            {% include "_delete_button.html" %}
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No history recorded.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endblock %}

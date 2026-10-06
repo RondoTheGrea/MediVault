@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Staff accounts</h1>
+  <a class="button primary" href="{{ url_for('user_new') }}">+ New user</a>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for user in users %}
+      <tr {% if not user.is_active %}class="inactive"{% endif %}>
+        <td>{{ user.full_name }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.role.display_name }}</td>
+        <td>{% if user.is_active %}Active{% else %}Deactivated{% endif %}</td>
+        <td class="actions">
+          {% if user.id != g.user.id %}
+          <form class="inline" method="post" action="{{ url_for('user_toggle_active', user_id=user.id) }}">
+            {% if user.is_active %}
+              <button class="button small danger" type="submit">Deactivate</button>
+            {% else %}
+              <button class="button small" type="submit">Reactivate</button>
+            {% endif %}
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted small">Accounts are deactivated rather than deleted so the audit log keeps pointing at real people.</p>
+</div>
+{% endblock %}

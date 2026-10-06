@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Patients{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Patients</h1>
+  {% if g.user.can(Permission.CREATE_PATIENTS) %}
+    <a class="button primary" href="{{ url_for('patient_form') }}">+ Register patient</a>
+  {% endif %}
+</div>
+
+<form class="search" method="get">
+  <input name="q" value="{{ search_text }}" placeholder="Search by first or last name">
+  <button class="button" type="submit">Search</button>
+  {% if search_text %}<a href="{{ url_for('patient_list') }}">Clear</a>{% endif %}
+</form>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Birth date</th><th>Age</th><th>Sex</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for patient in patients %}
+      <tr>
+        <td>{{ patient.last_name }}, {{ patient.first_name }}</td>
+        <td>{{ patient.birth_date }}</td>
+        <td>{{ patient.age() }}</td>
+        <td>{{ patient.sex }}</td>
+        <td class="actions">
+          {% if g.user.can(Permission.VIEW_PATIENTS) %}
+            <a class="button small" href="{{ url_for('patient_detail', patient_id=patient.id) }}">Open</a>
+          {% endif %}
+          {% if g.user.can(Permission.EMERGENCY_ACCESS) %}
+            <a class="button small danger" href="{{ url_for('emergency_access', patient_id=patient.id) }}">Emergency</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">No patients found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

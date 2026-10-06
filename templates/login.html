@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="card narrow login">
+  <h1>MediVault</h1>
+  <p class="muted">Secure medical information management</p>
+  <form method="post">
+    <label>Username
+      <input name="username" autocomplete="username" required autofocus>
+    </label>
+    <label>Password
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button class="button primary wide" type="submit">Log in</button>
+  </form>
+  <details class="demo-accounts">
+    <summary>Demo accounts</summary>
+    <table>
+      <tr><td>admin</td><td>Admin1234</td><td>Administrator</td></tr>
+      <tr><td>dr.reyes</td><td>Doctor1234</td><td>Physician</td></tr>
+      <tr><td>nurse.cruz</td><td>Nurse1234</td><td>Nurse</td></tr>
+      <tr><td>records.lim</td><td>Records1234</td><td>Records Staff</td></tr>
+      <tr><td>medic.tan</td><td>Medic1234</td><td>Emergency Responder</td></tr>
+    </table>
+  </details>
+</div>
+{% endblock %}

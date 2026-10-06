@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Medication{% endblock %}
+{% block content %}
+<h1>{% if medication.id %}Edit{% else %}Add{% endif %} medication · {{ patient.full_name() }}</h1>
+{% include "_errors.html" %}
+<form class="card form narrow" method="post">
+  <label>Name *<input name="name" value="{{ medication.name }}" required></label>
+  <label>Dosage *<input name="dosage" value="{{ medication.dosage }}" placeholder="e.g. 500 mg" required></label>
+  <label>Frequency *<input name="frequency" value="{{ medication.frequency }}" placeholder="e.g. Twice daily" required></label>
+  <label>Status *
+    <select name="status">
+      {% for choice in MEDICATION_STATUS_CHOICES %}
+        <option {% if medication.status == choice %}selected{% endif %}>{{ choice }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <div class="form-buttons">
+    <button class="button primary" type="submit">Save</button>
+    <a href="{{ url_for('patient_detail', patient_id=patient.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

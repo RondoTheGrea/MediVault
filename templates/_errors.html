@@ -1,0 +1,9 @@
+{# Shows a list of validation errors. Include it in any form template. #}
+{% if errors %}
+  <div class="flash flash-error">
+    <strong>Please fix the following:</strong>
+    <ul>
+      {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set patient = summary.patient %}
+{% block title %}Emergency · {{ patient.full_name() }}{% endblock %}
+{% block content %}
+<div class="emergency-banner">
+  EMERGENCY ACCESS · logged at {{ summary.accessed_at }} · Reason: {{ summary.reason }}
+</div>
+
+<div class="emergency-grid">
+  <section class="card">
+    <h2>{{ patient.full_name() }}</h2>
+    <dl class="facts">
+      <dt>Age</dt><dd>{{ patient.age() }} ({{ patient.birth_date }})</dd>
+      <dt>Sex</dt><dd>{{ patient.sex }}</dd>
+      <dt>Blood type</dt><dd class="big">{{ patient.blood_type or "Unknown" }}</dd>
+    </dl>
+  </section>
+  <section class="card">
+    <h2>Emergency contact</h2>
+    <p class="big">{{ patient.emergency_contact_name or "None on file" }}</p>
+    <p class="big">{{ patient.emergency_contact_phone }}</p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Allergies &amp; current medications</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Name</th><th>Details</th></tr></thead>
+    <tbody>
+    {# Every record is either an Allergy or a Medication, but the template just calls
+       kind(), title() and details() - each class fills those in its own way. #}
+    {% for record in summary.essential_records %}
+      <tr class="kind-{{ record.kind()|lower }}">
+        <td><strong>{{ record.kind() }}</strong></td>
+        <td>{{ record.title() }}</td>
+        <td>{{ record.details() }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" class="muted">No known allergies and no current medications on file.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<p><a class="button" href="{{ url_for('patient_list') }}">Back to patient list</a></p>
+{% endblock %}

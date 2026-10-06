@@ -1,0 +1,4 @@
+{# A tiny form that POSTs to delete_url. Deleting with a GET link would be unsafe. #}
+<form class="inline" method="post" action="{{ delete_url }}" onsubmit="return confirm('Delete this? This cannot be undone.')">
+  <button class="button small danger" type="submit">Delete</button>
+</form>

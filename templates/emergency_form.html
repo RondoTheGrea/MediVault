@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Emergency access{% endblock %}
+{% block content %}
+<div class="card narrow emergency-box">
+  <h1>Emergency access</h1>
+  <p>You are about to open the essential medical information of
+     <strong>{{ patient.full_name() }}</strong> (born {{ patient.birth_date }}).</p>
+  <p class="warning">This is logged as an <strong>EMERGENCY</strong> access under your name and
+     will be reviewed by administrators. Use only in a genuine emergency.</p>
+  {% include "_errors.html" %}
+  <form method="post">
+    <label>Describe the emergency *
+      <textarea name="reason" rows="3" required minlength="10"
+        placeholder="e.g. Patient unconscious after road accident, need allergy information">{{ reason }}</textarea>
+    </label>
+    <div class="form-buttons">
+      <button class="button danger" type="submit">Open emergency information</button>
+      <a href="{{ url_for('patient_list') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
