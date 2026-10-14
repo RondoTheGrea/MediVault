@@ -6,6 +6,7 @@ logged emergency ("break-glass") access. Built with Flask and SQLite.
 ## How to Run it
 
 ```
+pip install -r requirements.txt
 .venv\Scripts\activate
 pip install -r requirements.txt
 flask --app app run --debug
