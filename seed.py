@@ -128,3 +128,55 @@ def seed_patients(conn, encryptor):
                                 frequency="Once daily", status="current"))
     medications.save(Medication(patient_id=pedro.id, name="Clopidogrel", dosage="75 mg",
                                 frequency="Once daily", status="current"))
+
+    seed_additional_patients(conn)
+
+
+def seed_additional_patients(conn):
+    """Add 100 fictional patient profiles, skipping profiles already seeded.
+
+    Can also be called against an existing database without resetting it.
+    These profiles contain no clinical records or real contact information.
+    """
+    first_names = [
+        ("Adrian", "Male"), ("Bianca", "Female"),
+        ("Carlo", "Male"), ("Diana", "Female"),
+        ("Emilio", "Male"), ("Francesca", "Female"),
+        ("Gabriel", "Male"), ("Helena", "Female"),
+        ("Isaac", "Male"), ("Julia", "Female"),
+    ]
+    last_names = [
+        "Aquino", "Bautista", "Castillo", "Domingo", "Enriquez",
+        "Flores", "Gonzales", "Herrera", "Ignacio", "Jimenez",
+    ]
+    blood_types = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", ""]
+    patients = PatientRepository(conn)
+    existing = {
+        (p.first_name, p.last_name, p.birth_date, p.address)
+        for p in patients.search("")
+    }
+    added = 0
+    for family_index, last_name in enumerate(last_names):
+        for given_index, (first_name, sex) in enumerate(first_names):
+            index = family_index * len(first_names) + given_index
+            number = index + 1
+            birth_date = "{:04d}-{:02d}-{:02d}".format(
+                1945 + (index * 7) % 65, 1 + index % 12, 1 + (index * 3) % 28)
+            address = "Fictional demo address {:03d}, Manila".format(number)
+            identity = (first_name, last_name, birth_date, address)
+            if identity in existing:
+                continue
+            patients.create(Patient(
+                first_name=first_name,
+                last_name=last_name,
+                birth_date=birth_date,
+                sex=sex,
+                blood_type=blood_types[index % len(blood_types)],
+                phone="0000{:07d}".format(number),
+                address=address,
+                emergency_contact_name="Demo Emergency Contact {:03d}".format(number),
+                emergency_contact_phone="0000{:07d}".format(100 + number),
+            ))
+            existing.add(identity)
+            added += 1
+    return added
