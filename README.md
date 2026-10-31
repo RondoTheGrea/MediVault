@@ -10,6 +10,7 @@ pip install -r requirements.txt
 .venv\Scripts\activate
 pip install -r requirements.txt
 flask --app app run --debug
+python -m unittest test.py -v
 ```
 
 Open http://127.0.0.1:5000. On the first run, `instance/` is created with the
