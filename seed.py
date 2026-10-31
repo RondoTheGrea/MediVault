@@ -1,6 +1,6 @@
 """
 Fills an empty database with roles, permissions, demo users and demo patients.
-Runs only once: if roles already exist, nothing happens.
+Existing demo patients also receive missing medical-record sections on startup.
 """
 from models import Permission, Patient, HistoryEntry, Allergy, Medication
 from repositories import (RoleRepository, UserRepository, PatientRepository,
@@ -56,6 +56,7 @@ DEMO_USERS = [
 def seed_if_empty(conn, encryptor):
     roles = RoleRepository(conn)
     if len(roles.list_all()) > 0:
+        seed_additional_medical_records(conn, encryptor)
         return
 
     for permission_name in ALL_PERMISSIONS:
@@ -130,13 +131,14 @@ def seed_patients(conn, encryptor):
                                 frequency="Once daily", status="current"))
 
     seed_additional_patients(conn)
+    seed_additional_medical_records(conn, encryptor)
 
 
 def seed_additional_patients(conn):
     """Add 100 fictional patient profiles, skipping profiles already seeded.
 
     Can also be called against an existing database without resetting it.
-    These profiles contain no clinical records or real contact information.
+    Medical records are added separately by seed_additional_medical_records.
     """
     first_names = [
         ("Adrian", "Male"), ("Bianca", "Female"),
@@ -180,3 +182,60 @@ def seed_additional_patients(conn):
             existing.add(identity)
             added += 1
     return added
+
+
+def seed_additional_medical_records(conn, encryptor):
+    """Fill empty clinical sections for the 100 generated demo patients only.
+
+    Existing sections are preserved, so repeated startup does not duplicate data.
+    Repository saves apply the same encryption used by the application.
+    """
+    history = HistoryRepository(conn, encryptor)
+    allergies = AllergyRepository(conn)
+    medications = MedicationRepository(conn, encryptor)
+    conditions = [
+        ("Hypertension", "Blood pressure monitoring and lifestyle counselling.",
+         "Losartan", "50 mg", "Once daily"),
+        ("Type 2 diabetes mellitus", "Blood glucose monitoring and diet counselling.",
+         "Metformin", "500 mg", "Twice daily"),
+        ("Bronchial asthma", "Reviewed inhaler technique and symptom monitoring.",
+         "Salbutamol inhaler", "100 mcg, 2 puffs", "As needed"),
+        ("Allergic rhinitis", "Reviewed symptoms and avoidance of known triggers.",
+         "Cetirizine", "10 mg", "Once daily"),
+    ]
+    allergy_options = [
+        ("Penicillin", "Hives", "Moderate"),
+        ("Peanuts", "Anaphylaxis", "Life-threatening"),
+        ("Latex", "Contact rash", "Mild"),
+        ("Shellfish", "Itching and rash", "Moderate"),
+    ]
+    for patient in PatientRepository(conn).search(""):
+        prefix = "Fictional demo address "
+        if not patient.address.startswith(prefix):
+            continue
+        try:
+            number = int(patient.address[len(prefix):].split(",")[0])
+        except ValueError:
+            continue
+        if not 1 <= number <= 100:
+            continue
+        index = number - 1
+        diagnosis, notes, name, dosage, frequency = conditions[index % len(conditions)]
+        if not conn.execute("SELECT 1 FROM history_entries WHERE patient_id = ?",
+                            (patient.id,)).fetchone():
+            history.save(HistoryEntry(patient_id=patient.id, entry_date="2025-06-15",
+                                      diagnosis=diagnosis, treatment_notes=notes))
+            history.save(HistoryEntry(patient_id=patient.id, entry_date="2026-03-10",
+                                      diagnosis=diagnosis + " follow-up",
+                                      treatment_notes="Reviewed symptoms and ongoing treatment."))
+        if not conn.execute("SELECT 1 FROM allergies WHERE patient_id = ?",
+                            (patient.id,)).fetchone():
+            allergen, reaction, severity = allergy_options[index % len(allergy_options)]
+            allergies.save(Allergy(patient_id=patient.id, allergen=allergen,
+                                   reaction=reaction, severity=severity))
+        if not conn.execute("SELECT 1 FROM medications WHERE patient_id = ?",
+                            (patient.id,)).fetchone():
+            medications.save(Medication(patient_id=patient.id, name=name, dosage=dosage,
+                                        frequency=frequency, status="current"))
+            medications.save(Medication(patient_id=patient.id, name="Paracetamol", dosage="500 mg",
+                                        frequency="As needed for fever", status="past"))
